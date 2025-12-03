@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1.5%놀이터 - 중국본사 직영</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Malgun Gothic',sans-serif;background:#000;color:#fff;}
+        .header{background:linear-gradient(#c00,#900);padding:20px;text-align:center;font-size:50px;color:#ff0;text-shadow:5px 5px 15px #000;}
+        .notice{background:#111;color:#ff0;padding:14px;text-align:center;font-size:21px;animation:blink 1.4s infinite;}
+        @keyframes blink{50%{opacity:0.5}}
+        .user-info{position:absolute;top:20px;right:20px;background:rgba(0,0,0,0.8);padding:12px 25px;border-radius:50px;border:3px solid #ff0;font-size:19px;}
+        .balance{font-size:42px;background:#000;border:6px solid #ff0;padding:15px 60px;border-radius:50px;margin:20px;display:inline-block;}
+        .btn{padding:20px 60px;margin:15px;background:#ff0;color:#c00;font-weight:bold;border-radius:50px;font-size:26px;cursor:pointer;}
+        .btn:hover{background:#fff;transform:scale(1.05);}
+        .popup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.98);z-index:999;}
+        .popup-inner{max-width:90%;margin:50px auto;background:#111;padding:40px;border:7px solid #c00;border-radius:25px;position:relative;}
+        .close{color:#ff0;font-size:60px;position:absolute;top:10px;right:20px;cursor:pointer;}
+        #adminPanel{display:none;background:#111;padding:40px;}
+        table{width:100%;border-collapse:collapse;margin:25px 0;font-size:18px;}
+        th,td{border:1px solid #c00;padding:15px;text-align:center;}
+        th{background:#900;color:#ff0;}
+        input, select{padding:15px;font-size:20px;width:100%;margin:10px 0;border-radius:10px;border:none;}
+        .small-btn{padding:10px 20px;margin:5px;font-size:18px;background:#ff0;color:#c00;border-radius:20px;}
+    </style>
+</head>
+<body>
+
+<div class="header">1.5%놀이터 중국본사 직영</div>
+<div class="notice">신규가입 10만원 즉시 지급 │ 첫충 30% 매충 15% 루징 8% 무제한</div>
+
+<div id="userInfo" class="user-info" style="display:none;">
+    <span id="welcomeMsg"></span>님 
+    <button class="btn" style="padding:8px 20px;font-size:16px;" onclick="logout()">로그아웃</button>
+    <span id="adminTag" style="color:#0f0;margin-left:10px;display:none;">[관리자</span>
+</div>
+
+<center>
+    <div class="balance" id="balanceBox" style="display:none;">보유금 : <span id="money">0</span>원</div><br>
+    
+    <div id="guestMenu">
+        <button class="btn" onclick="openPopup('loginPopup')">로그인</button>
+        <button class="btn" onclick="openPopup('registerPopup')">회원가입</button>
+    </div>
+
+    <div id="memberMenu" style="display:none;">
+        <button class="btn" onclick="checkLogin(openPopup, 'depositPopup')">충전하기</button>
+        <button class="btn" onclick="checkLogin(openPopup, 'withdrawPopup')">환전신청</button>
+        <button class="btn" id="adminBtn" style="display:none;" onclick="openPopup('adminPopup')">관리자패널</button>
+    </div>
+</center>
+
+<!-- 로그인 팝업 -->
+<div id="loginPopup" class="popup">
+    <div class="popup-inner">
+        <span class="close" onclick="closePopup('loginPopup')">×</span>
+        <h2 style="color:#ff0;">로그인</h2>
+        <input type="text" id="loginId" placeholder="아이디"><br>
+        <input type="password" id="loginPw" placeholder="비밀번호"><br>
+        <button class="btn" onclick="login()">로그인</button>
+    </div>
+</div>
+
+<!-- 회원가입 팝업 -->
+<div id="registerPopup" class="popup">
+    <div class="popup-inner">
+        <span class="close" onclick="closePopup('registerPopup')">×</span>
+        <h2 style="color:#ff0;">회원가입 (신규 10만원 즉시 지급)</h2>
+        <input type="text" id="regId" placeholder="아이디 (영문+숫자 4~12자)"><br>
+        <input type="password" id="regPw" placeholder="비밀번호"><br>
+        <input type="text" id="regNick" placeholder="별명"><br>
+        <input type="text" id="regBank" placeholder="은행명"><br>
+        <input type="text" id="regAccount" placeholder="계좌번호"><br>
+        <input type="text" id="regHolder" placeholder="예금주"><br>
+        <button class="btn" onclick="register()">가입하고 10만원 받기</button>
+    </div>
+</div>
+
+<!-- 충전 팝업 -->
+<div id="depositPopup" class="popup">
+    <div class="popup-inner">
+        <span class="close" onclick="closePopup('depositPopup')">×</span>
+        <h2 style="color:#ff0;">충전신청 (첫충 30% │ 매충 15%)</h2>
+        <input type="number" id="depositAmt" placeholder="충전금액 (최소 1만원)"><br>
+        <input type="text" id="depositName" placeholder="입금자명 (필수)"><br>
+        <button class="btn" onclick="deposit()">충전신청</button>
+        <p style="margin-top:20px;color:#aaa;">입금계좌 : 농협 123-4567-8901-23 (주)놀이터</p>
+    </div>
+</div>
+
+<!-- 환전 팝업 -->
+<div id="withdrawPopup" class="popup">
+    <div class="popup-inner">
+        <span class="close" onclick="closePopup('withdrawPopup')">×</span>
+        <h2 style="color:#ff0;">환전신청</h2>
+        <input type="number" id="withdrawAmt" placeholder="환전금액 (최소 3만원)"><br>
+        <button class="btn" onclick="withdraw()">환전신청</button>
+        <p style="margin-top:20px;color:#aaa;">신청 후 3~5분 내 입금됩니다</p>
+    </div>
+</div>
+
+<!-- 관리자 패널 -->
+<div id="adminPopup" class="popup">
+    <div class="popup-inner" style="max-width:95%;">
+        <span class="close" onclick="closePopup('adminPopup')">×</span>
+        <h2 style="color:#ff0;">관리자 패널</h2>
+        <div id="adminContent"></div>
+    </div>
+</div>
+
+<script>
+// 전역 변수
+let currentUser = null;
+let users = JSON.parse(localStorage.getItem('users') || '[]');
+let deposits = JSON.parse(localStorage.getItem('deposits') || '[]');
+let withdraws = JSON.parse(localStorage.getItem('withdraws') || '[]');
+
+// 관리자 계정 자동 생성
+if(!users.some(u => u.id === 'admin')){
+    users.push({
+        id:'admin', 
+        pw:'admin1234', 
+        nick:'사장님', 
+        balance:999999999, 
+        isAdmin:true, 
+        join:'2025-01-01',
+        bank:'', account:'', holder:''
+    });
+    localStorage.setItem('users', JSON.stringify(users));
+}
+
+// 팝업 제어
+function openPopup(id){ document.getElementById(id).style.display = 'block'; }
+function closePopup(id){ document.getElementById(id).style.display = 'none'; }
+function checkLogin(fn, arg){ if(!currentUser){ alert('로그인 후 이용해주세요'); openPopup('loginPopup'); return; } fn(arg); }
+
+// 로그인
+function login(){
+    let id = document.getElementById('loginId').value.trim();
+    let pw = document.getElementById('loginPw').value;
+    let user = users.find(u => u.id===id && u.pw===pw);
+    if(user){
+        currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        updateUI();
+        closePopup('loginPopup');
+        alert(user.nick + '님 환영합니다!');
+    } else alert('아이디 또는 비밀번호가 틀립니다');
+}
+
+// 로그아웃
+function logout(){
+    if(confirm('로그아웃 하시겠습니까?')){
+        currentUser = null;
+        localStorage.removeItem('currentUser');
+        updateUI();
+        alert('로그아웃 되었습니다');
+    }
+}
+
+// 회원가입
+function register(){
+    let id = document.getElementById('regId').value.trim();
+    let pw = document.getElementById('regPw').value;
+    let nick = document.getElementById('regNick').value.trim();
+    let bank = document.getElementById('regBank').value.trim();
+    let account = document.getElementById('regAccount').value.trim();
+    let holder = document.getElementById('regHolder').value.trim();
+
+    if(!id || !pw || !nick || !bank || !account || !holder){
+        alert('모든 항목을 입력해주세요'); return;
+    }
+    if(users.some(u=>u.id===id)){ alert('이미 사용중인 아이디입니다'); return; }
+
+    let newUser = {
+        id, pw, nick, bank, account, holder,
+        balance: 100000, // 신규가입 10만원 즉시 지급
+        isAdmin: false,
+        join: new Date().toISOString().slice(0,10)
+    };
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users));
+    alert('회원가입 완료! 10만원이 지급되었습니다');
+    closePopup('registerPopup');
+}
+
+// 충전신청
+function deposit(){
+    let amt = parseInt(document.getElementById('depositAmt').value);
+    let name = document.getElementById('depositName').value.trim();
+    if(!amt || amt < 10000){ alert('최소 1만원 이상'); return; }
+    if(!name){ alert('입금자명을 입력하세요'); return; }
+
+    deposits.push({id:currentUser.id, nick:currentUser.nick, amt, name, date:new Date().toLocaleString(), status:'대기'});
+    localStorage.setItem('deposits', JSON.stringify(deposits));
+    alert('충전신청 완료! 관리자 승인 후 입금됩니다');
+    closePopup('depositPopup');
+}
+
+// 환전신청
+function withdraw(){
+    let amt = parseInt(document.getElementById('withdrawAmt').value);
+    if(!amt || amt < 30000){ alert('최소 3만원 이상'); return; }
+    if(amt > currentUser.balance){ alert('잔액 부족'); return; }
+
+    withdraws.push({id:currentUser.id, nick:currentUser.nick, amt, date:new Date().toLocaleString(), status:'대기'});
+    localStorage.setItem('withdraws', JSON.stringify(withdraws));
+    alert('환전신청 완료! 3~5분 내 입금됩니다');
+    closePopup('withdrawPopup');
+}
+
+// UI 업데이트
+function updateUI(){
+    if(currentUser){
+        document.getElementById('guestMenu').style.display='none';
+        document.getElementById('memberMenu').style.display='block';
+        document.getElementById('balanceBox').style.display='inline-block';
+        document.getElementById('userInfo').style.display='block';
+        document.getElementById('welcomeMsg').textContent = currentUser.nick;
+        document.getElementById('money').textContent = currentUser.balance.toLocaleString();
+
+        if(currentUser.isAdmin){
+            document.getElementById('adminTag').style.display='inline';
+            document.getElementById('adminBtn').style.display='inline-block';
+        }
+    } else {
+        document.getElementById('guestMenu').style.display='block';
+        document.getElementById('memberMenu').style.display='none';
+        document.getElementById('balanceBox').style.display='none';
+        document.getElementById('userInfo').style.display='none';
+    }
+}
+
+// 관리자 패널 열기
+function openAdminPanel(){
+    if(!currentUser?.isAdmin){ alert('권한 없음'); return; }
+    openPopup('adminPopup');
+    loadAdminPanel();
+}
+
+function loadAdminPanel(){
+    let html = `<h3 style="color:#ff0;">전체 회원 목록</h3>
+    <table>
+        <tr><th>아이디</th><th>별명</th><th>잔고</th><th>가입일</th><th>관리</th></tr>`;
+    
+    users.filter(u => !u.isAdmin).forEach(u => {
+        html += `<tr>
+            <td>${u.id}</td>
+            <td>${u.nick}</td>
+            <td>${u.balance.toLocaleString()}원</td>
+            <td>${u.join}</td>
+            <td><button class="small-btn" onclick="editBalance('${u.id}')">잔고수정</button></td>
+        </tr>`;
+    });
+    html += `</table>`;
+
+    // 충전 대기 목록
+    html += `<h3 style="color:#ff0;margin-top:40px;">충전 대기 (${deposits.filter(d=>d.status==='대기').length})</h3>
+    <table><tr><th>아이디</th><th>별명</th><th>금액</th><th>입금자명</th><th>신청시간</th><th>처리</th></tr>`;
+    deposits.filter(d=>d.status==='대기').forEach(d => {
+        html += `<tr>
+            <td>${d.id}</td><td>${d.nick}</td><td>${d.amt.toLocaleString()}원</td>
+            <td>${d.name}</td><td>${d.date}</td>
+            <td><button class="small-btn" style="background:#0f0;color:#000;" onclick="approveDeposit('${d.date}')">승인</button></td>
+        </tr>`;
+    });
+    html += `</table>`;
+
+    // 환전 대기 목록
+    html += `<h3 style="color:#ff0;margin-top:40px;">환전 대기 (${withdraws.filter(w=>w.status==='대기').length})</h3>
+    <table><tr><th>아이디</th><th>별명</th><th>금액</th><th>신청시간</th><th>처리</th></tr>`;
+    withdraws.filter(w=>w.status==='대기').forEach(w => {
+        html += `<tr>
+            <td>${w.id}</td><td>${w.nick}</td><td>${w.amt.toLocaleString()}원</td>
+            <td>${w.date}</td>
+            <td><button class="small-btn" style="background:#f00;" onclick="approveWithdraw('${w.date}')">승인</button></td>
+        </tr>`;
+    });
+    html += `</table>`;
+
+    document.getElementById('adminContent').innerHTML = html;
+}
+
+// 잔고 수정
+function editBalance(id){
+    let user = users.find(u=>u.id===id);
+    let amt = prompt(`${user.nick}(${user.id}) 현재 잔고: ${user.balance.toLocaleString()}원\n수정할 금액을 입력 (음수면 차감)`);
+    if(amt !== null){
+        let change = parseInt(amt||0);
+        user.balance += change;
+        localStorage.setItem('users', JSON.stringify(users));
+        alert('잔고 수정 완료');
+        loadAdminPanel();
+    }
+}
+
+// 충전 승인
+function approveDeposit(date){
+    let dep = deposits.find(d => d.date === date);
+    if(!dep) return;
+    let user = users.find(u => u.id === dep.id);
+    let bonus = dep.amt * (user.balance === 100000 ? 0.3 : 0.15); // 첫충 30% 아니면 15%
+    user.balance += dep.amt + bonus;
+    dep.status = '완료';
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('deposits', JSON.stringify(deposits));
+    alert(`${dep.nick}님 ${dep.amt.toLocaleString()}원 충전 + 보너스 ${bonus.toLocaleString()}원 지급 완료`);
+    loadAdminPanel();
+}
+
+// 환전 승인
+function approveWithdraw(date){
+    let wd = withdraws.find(w => w.date === date);
+    if(!wd) return;
+    let user = users.find(u => u.id === wd.id);
+    if(user.balance < wd.amt){ alert('잔액 부족'); return; }
+    user.balance -= wd.amt;
+    wd.status = '완료';
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('withdraws', JSON.stringify(withdraws));
+    alert(`${wd.nick}님 ${wd.amt.toLocaleString()}원 환전 완료 처리`);
+    loadAdminPanel();
+}
+
+// 페이지 로드
+window.onload = function(){
+    let saved = localStorage.getItem('currentUser');
+    if(saved) currentUser = JSON.parse(saved);
+    updateUI();
+};
+</script>
+
+</body>
+</html>
